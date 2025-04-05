@@ -5,10 +5,20 @@ import Link from 'next/link';
 import { formatBitcoin, formatCurrency, formatDate } from '@/lib/utils/helpers';
 import { TransactionType } from '@/lib/types';
 
-export default function RecentTransactions() {
+interface RecentTransactionsProps {
+  filter?: string;
+  timeframe?: string;
+  limit?: number;
+}
+
+export default function RecentTransactions({ 
+  filter = 'all', 
+  timeframe = 'all',
+  limit = 10
+}: RecentTransactionsProps) {
   // This is a placeholder component for now
   // We'll implement actual data fetching from Supabase later
-  const mockTransactions = [
+  const allTransactions = [
     {
       id: '1',
       type: 'buy' as TransactionType,
@@ -53,8 +63,62 @@ export default function RecentTransactions() {
       pricePerBitcoin: 38000,
       fiatAmount: 380,
       description: 'Online purchase'
+    },
+    {
+      id: '6',
+      type: 'send' as TransactionType,
+      date: '2023-07-15',
+      bitcoinAmount: 0.03,
+      pricePerBitcoin: 36000,
+      fiatAmount: 1080,
+      description: 'Transfer to hardware wallet'
+    },
+    {
+      id: '7',
+      type: 'buy' as TransactionType,
+      date: '2023-06-10',
+      bitcoinAmount: 0.15,
+      pricePerBitcoin: 35000,
+      fiatAmount: 5250,
+      description: 'Price dip opportunity'
+    },
+    {
+      id: '8',
+      type: 'receive' as TransactionType,
+      date: '2023-05-05',
+      bitcoinAmount: 0.02,
+      pricePerBitcoin: 33000,
+      fiatAmount: 660,
+      description: 'Gift from friend'
     }
   ];
+
+  // Apply filters
+  const filteredTransactions = allTransactions
+    .filter(transaction => {
+      // Filter by type
+      if (filter !== 'all' && transaction.type !== filter) {
+        return false;
+      }
+      
+      // Filter by timeframe
+      const txDate = new Date(transaction.date);
+      const now = new Date();
+      
+      if (timeframe === 'year') {
+        return txDate.getFullYear() === now.getFullYear();
+      } else if (timeframe === 'quarter') {
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        return txDate >= threeMonthsAgo;
+      } else if (timeframe === 'month') {
+        return txDate.getMonth() === now.getMonth() && 
+               txDate.getFullYear() === now.getFullYear();
+      }
+      
+      return true; // 'all' timeframe
+    })
+    .slice(0, limit);
 
   // Function to get appropriate styling based on transaction type
   const getTransactionTypeStyle = (type: TransactionType) => {
@@ -73,6 +137,14 @@ export default function RecentTransactions() {
         return 'bg-gray-700 text-gray-300';
     }
   };
+
+  if (filteredTransactions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No transactions found with the selected filters.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden">
@@ -101,7 +173,7 @@ export default function RecentTransactions() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
-            {mockTransactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <tr key={transaction.id} className="hover:bg-gray-800">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {formatDate(transaction.date)}
@@ -128,17 +200,19 @@ export default function RecentTransactions() {
           </tbody>
         </table>
       </div>
-      <div className="pt-4 pb-2 border-t border-gray-800 mt-4">
-        <Link
-          href="/dashboard/transactions"
-          className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300"
-        >
-          View All Transactions
-          <svg className="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-          </svg>
-        </Link>
-      </div>
+      {limit < allTransactions.length && (
+        <div className="pt-4 pb-2 border-t border-gray-800 mt-4">
+          <Link
+            href="/dashboard/transactions"
+            className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300"
+          >
+            View All Transactions
+            <svg className="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </Link>
+        </div>
+      )}
     </div>
   );
 } 
