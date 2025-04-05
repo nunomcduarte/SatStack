@@ -9,7 +9,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ user }: DashboardClientProps) {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen">
       {!user && (
         <div className="max-w-7xl mx-auto px-4 pt-4">
           <div className="bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">

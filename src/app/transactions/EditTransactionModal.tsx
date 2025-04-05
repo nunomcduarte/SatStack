@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, RefreshCcwIcon } from "lucide-react"
-import { format, subMonths, getYear, setMonth, setYear, addMonths, getMonth, startOfMonth, endOfMonth, getDay, subDays, addDays } from "date-fns"
+import { format, setMonth, setYear, addMonths, getMonth, getYear, startOfMonth, endOfMonth, getDay, subDays, addDays } from "date-fns"
 import { isSameDay } from "date-fns"
 
 import { Button } from "@/components/ui/button"
@@ -21,32 +21,35 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils/cn"
-import { useTransactionsStore } from "@/lib/stores/transactionsStore"
+import { useTransactionsStore, Transaction } from "@/lib/stores/transactionsStore"
 import { TransactionType } from "@/lib/types"
 import { getCurrentPrice, getHistoricalPrice } from "@/lib/services/priceService"
+import { useToast } from "@/components/ui/use-toast"
 
-interface AddTransactionModalProps {
+interface EditTransactionModalProps {
   isOpen: boolean
   onClose: () => void
+  transaction: Transaction
 }
 
-export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date())
+export default function EditTransactionModal({ isOpen, onClose, transaction }: EditTransactionModalProps) {
+  const { toast } = useToast()
+  const [date, setDate] = useState<Date | undefined>(new Date(transaction.date))
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [calendarView, setCalendarView] = useState<'day' | 'month' | 'year'>('day')
-  const [currentViewDate, setCurrentViewDate] = useState<Date>(new Date())
-  const [transactionType, setTransactionType] = useState<TransactionType>("buy")
-  const [amount, setAmount] = useState("")
-  const [priceOption, setPriceOption] = useState("current")
-  const [price, setPrice] = useState("")
+  const [currentViewDate, setCurrentViewDate] = useState<Date>(new Date(transaction.date))
+  const [transactionType, setTransactionType] = useState<TransactionType>(transaction.type)
+  const [amount, setAmount] = useState(transaction.bitcoinAmount.toString())
+  const [priceOption, setPriceOption] = useState("manual")
+  const [price, setPrice] = useState(transaction.pricePerBitcoin.toString())
   const [isLoadingPrice, setIsLoadingPrice] = useState(false)
-  const [fees, setFees] = useState("")
+  const [fees, setFees] = useState(transaction.fees ? transaction.fees.toString() : "")
   const [source, setSource] = useState("")
-  const [description, setDescription] = useState("")
+  const [description, setDescription] = useState(transaction.description || "")
   const [error, setError] = useState<string | null>(null)
   const [priceError, setPriceError] = useState<string | null>(null)
   
-  const { addTransaction, transactions } = useTransactionsStore()
+  const { updateTransaction, transactions } = useTransactionsStore()
 
   // Set currentViewDate when date changes
   useEffect(() => {
@@ -55,19 +58,14 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     }
   }, [date]);
 
-  // Fetch current price on mount
+  // Extract source from description if available (for backward compatibility)
   useEffect(() => {
-    if (isOpen && priceOption === "current") {
-      fetchCurrentBitcoinPrice();
+    if (transaction.description && transaction.description.startsWith("Transaction from ")) {
+      const sourcePart = transaction.description.replace("Transaction from ", "");
+      setSource(sourcePart);
+      setDescription("");
     }
-  }, [isOpen, priceOption]);
-
-  // Fetch historical price when date changes
-  useEffect(() => {
-    if (date && priceOption === "historical") {
-      fetchHistoricalBitcoinPrice(date);
-    }
-  }, [date, priceOption]);
+  }, [transaction.description]);
 
   const fetchCurrentBitcoinPrice = async () => {
     setIsLoadingPrice(true);
@@ -196,12 +194,22 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     
     let totalBitcoin = 0;
     
-    for (const transaction of transactions) {
-      if (transaction.type === "buy" || transaction.type === "receive") {
-        totalBitcoin += transaction.bitcoinAmount;
-      } else if (transaction.type === "sell" || transaction.type === "send" || transaction.type === "spend") {
-        totalBitcoin -= transaction.bitcoinAmount;
+    for (const tx of transactions) {
+      // Skip the current transaction being edited for accurate calculation
+      if (tx.id === transaction.id) continue;
+      
+      if (tx.type === "buy" || tx.type === "receive") {
+        totalBitcoin += tx.bitcoinAmount;
+      } else if (tx.type === "sell" || tx.type === "send" || tx.type === "spend") {
+        totalBitcoin -= tx.bitcoinAmount;
       }
+    }
+    
+    // Add back the original amount for accurate calculations when changing transaction type
+    if (transaction.type === "buy" || transaction.type === "receive") {
+      totalBitcoin += transaction.bitcoinAmount;
+    } else if (transaction.type === "sell" || transaction.type === "send" || transaction.type === "spend") {
+      totalBitcoin -= transaction.bitcoinAmount;
     }
     
     return Math.max(0, totalBitcoin);
@@ -232,7 +240,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     }
     
     // For sell transactions, check if the user has enough Bitcoin
-    if (transactionType === "sell" || transactionType === "send" || transactionType === "spend") {
+    if ((transactionType === "sell" || transactionType === "send" || transactionType === "spend") && 
+        transaction.type !== transactionType) {
       const totalHoldings = calculateTotalHoldings();
       if (bitcoinAmount > totalHoldings) {
         setError(`You don't have enough Bitcoin. Current holdings: ${totalHoldings.toFixed(8)} BTC`);
@@ -254,10 +263,9 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       fiatAmount = bitcoinAmount * pricePerBitcoin;
     }
     
-    // Create a new transaction with all necessary fields
-    const newTransaction = {
-      id: crypto.randomUUID(),
-      type: transactionType as TransactionType,
+    // Create an updated transaction with all necessary fields
+    const updatedTransaction: Partial<Transaction> = {
+      type: transactionType,
       date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
       bitcoinAmount,
       pricePerBitcoin,
@@ -266,28 +274,21 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       description: description || (source ? `Transaction from ${source}` : '')
     };
     
-    // Add transaction to the store
-    addTransaction(newTransaction);
+    // Update transaction in the store
+    updateTransaction(transaction.id, updatedTransaction);
     
     // Force a UI update for the dashboard
-    window.dispatchEvent(new Event('transaction-added'));
+    window.dispatchEvent(new Event('transaction-updated'));
     
-    // Reset the form
-    resetForm();
+    // Show success message
+    toast({
+      title: "Transaction updated",
+      description: "Your transaction has been successfully updated.",
+      variant: "success",
+    });
     
     // Close the modal
     onClose();
-  };
-
-  const resetForm = () => {
-    setDate(new Date());
-    setTransactionType("buy");
-    setAmount("");
-    setPriceOption("current");
-    setPrice("");
-    setFees("");
-    setSource("");
-    setDescription("");
   };
 
   const calculateTotal = () => {
@@ -308,13 +309,6 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     }
     return "0.00";
   };
-
-  const presetDates = [
-    { label: "Today", date: new Date() },
-    { label: "Yesterday", date: new Date(Date.now() - 86400000) },
-    { label: "Last Week", date: new Date(Date.now() - 7 * 86400000) },
-    { label: "Last Month", date: new Date(Date.now() - 30 * 86400000) },
-  ];
 
   // Generate year options for selector (current year +/- 10 years)
   const currentYear = new Date().getFullYear();
@@ -459,8 +453,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col overflow-hidden p-0">
         <DialogHeader className="sticky top-0 z-30 bg-background px-6 pt-6 pb-2">
-          <DialogTitle>Add Transaction</DialogTitle>
-          <DialogDescription>Enter the details of your Bitcoin transaction.</DialogDescription>
+          <DialogTitle>Edit Transaction</DialogTitle>
+          <DialogDescription>Update the details of your Bitcoin transaction.</DialogDescription>
         </DialogHeader>
 
         {/* Display error message if there is one */}
@@ -699,7 +693,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               Cancel
             </Button>
             <Button type="submit" onClick={handleSubmit} className="w-full sm:w-auto">
-              Add Transaction
+              Update Transaction
             </Button>
           </div>
         </DialogFooter>

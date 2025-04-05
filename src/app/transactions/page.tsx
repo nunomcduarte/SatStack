@@ -6,10 +6,7 @@ import { differenceInDays } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { 
   ArrowUpDown, 
-  Download, 
-  FileUp, 
   FileDown, 
-  RefreshCw, 
   Plus,
   ChevronDown,
   Trash,
@@ -17,20 +14,6 @@ import {
   CheckCircle
 } from 'lucide-react'
 import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,28 +23,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Input } from '@/components/ui/input'
 import { formatDate, formatBitcoin, formatCurrency } from '@/lib/utils/helpers'
 import AddTransactionModal from '@/components/transactions/AddTransactionModal'
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/use-toast"
+import EditTransactionModal from '@/components/transactions/EditTransactionModal'
 
 export default function TransactionsPage() {
   const { toast } = useToast()
   const { transactions, clearTransactions, removeTransaction } = useTransactionsStore()
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
   const [transactionType, setTransactionType] = useState('all')
   const [sortBy, setSortBy] = useState('date')
   const [sortOrder, setSortOrder] = useState('desc')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
   const [selectAll, setSelectAll] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -95,22 +71,12 @@ export default function TransactionsPage() {
     }
   }
 
-  // Filter transactions based on search query and type
+  // Filter transactions based on transaction type
   const filteredTransactions = transactions.filter(transaction => {
     // Filter by type
     if (transactionType !== 'all' && transaction.type !== transactionType) {
       return false
     }
-    
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        transaction.description?.toLowerCase().includes(query) ||
-        transaction.date.toLowerCase().includes(query)
-      )
-    }
-    
     return true
   })
 
@@ -179,6 +145,18 @@ export default function TransactionsPage() {
     }
   };
 
+  // Handle edit transaction
+  const handleEditTransaction = (transaction: Transaction) => {
+    setTransactionToEdit(transaction);
+    setShowEditModal(true);
+  };
+
+  // Handle edit modal close
+  const handleEditModalClose = () => {
+    setShowEditModal(false);
+    setTransactionToEdit(null);
+  };
+
   // Update the delete function to use toast notifications
   const handleDeleteSelected = async () => {
     try {
@@ -220,22 +198,12 @@ export default function TransactionsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col space-y-4">
-        <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+        <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
           
           <div className="flex flex-wrap gap-3">
             <Button 
               variant="outline" 
-              size="sm" 
-              className="flex items-center gap-1"
-              onClick={() => {}}
-            >
-              <FileUp className="h-4 w-4" />
-              Import
-            </Button>
-            
-            <Button 
-              variant="outline"
               size="sm"
               className="flex items-center gap-1"
               disabled={selectedTransactions.length === 0}
@@ -243,16 +211,6 @@ export default function TransactionsPage() {
             >
               <FileDown className="h-4 w-4" />
               Export Selected
-            </Button>
-            
-            <Button 
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1"
-              onClick={() => {}}
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
             </Button>
             
             <Button 
@@ -267,7 +225,7 @@ export default function TransactionsPage() {
           </div>
         </div>
         
-        <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+        <div className="flex">
           <div className="flex flex-wrap gap-2">
             <Button 
               variant={transactionType === 'all' ? 'default' : 'outline'} 
@@ -290,34 +248,6 @@ export default function TransactionsPage() {
             >
               Sells
             </Button>
-          </div>
-          
-          <div className="flex gap-2">
-            <Input 
-              placeholder="Search transactions..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64"
-            />
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <ArrowUpDown className="h-4 w-4" />
-                  Filter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setTransactionType('all')}>All Types</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTransactionType('buy')}>Buy</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTransactionType('sell')}>Sell</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTransactionType('send')}>Send</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTransactionType('receive')}>Receive</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTransactionType('spend')}>Spend</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         
@@ -434,7 +364,11 @@ export default function TransactionsPage() {
                         {transaction.description || '—'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditTransaction(transaction)}
+                        >
                           Edit
                         </Button>
                       </td>
@@ -443,7 +377,7 @@ export default function TransactionsPage() {
                 ) : (
                   <tr>
                     <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
-                      {searchQuery || transactionType !== 'all' ? (
+                      {transactionType !== 'all' ? (
                         <p>No transactions match your filters</p>
                       ) : (
                         <div className="flex flex-col items-center">
@@ -498,6 +432,15 @@ export default function TransactionsPage() {
         <AddTransactionModal 
           isOpen={showAddModal} 
           onClose={() => setShowAddModal(false)} 
+        />
+      )}
+
+      {/* Edit Transaction Modal */}
+      {showEditModal && transactionToEdit && (
+        <EditTransactionModal 
+          isOpen={showEditModal} 
+          onClose={handleEditModalClose} 
+          transaction={transactionToEdit}
         />
       )}
 
