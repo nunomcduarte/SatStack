@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils/cn"
+import { useTransactionsStore } from "@/lib/stores/transactionsStore"
+import { TransactionType } from "@/lib/types"
 
 interface AddTransactionModalProps {
   isOpen: boolean
@@ -26,25 +28,53 @@ interface AddTransactionModalProps {
 }
 
 export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
-  const [date, setDate] = useState<Date>()
-  const [transactionType, setTransactionType] = useState("buy")
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [transactionType, setTransactionType] = useState<TransactionType>("buy")
   const [amount, setAmount] = useState("")
   const [price, setPrice] = useState("")
   const [source, setSource] = useState("")
+  const [description, setDescription] = useState("")
+  
+  const { addTransaction } = useTransactionsStore()
 
   const handleSubmit = () => {
-    // Here you would handle the form submission
-    // For now, we'll just close the modal
+    if (!date || !amount || !price) {
+      alert("Please fill in all required fields")
+      return
+    }
+    
+    const bitcoinAmount = parseFloat(amount)
+    const pricePerBitcoin = parseFloat(price)
+    const fiatAmount = bitcoinAmount * pricePerBitcoin
+    
+    // Create a new transaction
+    const newTransaction = {
+      id: crypto.randomUUID(),
+      type: transactionType as TransactionType,
+      date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      bitcoinAmount,
+      pricePerBitcoin,
+      fiatAmount,
+      description: description || (source ? `Transaction from ${source}` : ''),
+    }
+    
+    // Add transaction to the store
+    addTransaction(newTransaction)
+    
+    // Reset the form
     resetForm()
+    
+    // Close the modal
     onClose()
   }
 
   const resetForm = () => {
-    setDate(undefined)
+    setDate(new Date())
     setTransactionType("buy")
     setAmount("")
     setPrice("")
     setSource("")
+    setDescription("")
   }
 
   const calculateTotal = () => {
@@ -66,7 +96,10 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
             <Label htmlFor="transaction-type" className="text-right">
               Type
             </Label>
-            <Select value={transactionType} onValueChange={setTransactionType}>
+            <Select 
+              value={transactionType} 
+              onValueChange={(value) => setTransactionType(value as TransactionType)}
+            >
               <SelectTrigger id="transaction-type" className="col-span-3">
                 <SelectValue placeholder="Select transaction type" />
               </SelectTrigger>
@@ -95,7 +128,12 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                <Calendar 
+                  mode="single" 
+                  selected={date} 
+                  onSelect={setDate} 
+                  initialFocus 
+                />
               </PopoverContent>
             </Popover>
           </div>
@@ -141,6 +179,18 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               placeholder="Exchange or wallet name"
               value={source}
               onChange={(e) => setSource(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
+            <Input
+              id="description"
+              placeholder="Optional description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="col-span-3"
             />
           </div>

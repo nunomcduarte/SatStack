@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis, ResponsiveContainer } from "recharts"
 
 const portfolioData = [
   { date: "Jan", value: 35000, btc: 1.2 },
@@ -64,35 +64,37 @@ export default function PortfolioOverview() {
             }}
             className="h-80"
           >
-            <AreaChart data={portfolioData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-value)" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="var(--color-value)" stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis yAxisId="left" orientation="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area
-                yAxisId="left"
-                type="monotone"
-                dataKey="value"
-                name="Portfolio Value"
-                stroke="var(--color-value)"
-                fillOpacity={1}
-                fill="url(#colorValue)"
-              />
-              <Line 
-                yAxisId="right" 
-                type="monotone" 
-                dataKey="btc" 
-                name="BTC Amount"
-                stroke="var(--color-btc)" 
-              />
-            </AreaChart>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={portfolioData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(215, 100%, 60%)" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="hsl(215, 100%, 60%)" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis yAxisId="left" orientation="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="value"
+                  name="Portfolio Value"
+                  stroke="hsl(215, 100%, 60%)"
+                  fillOpacity={1}
+                  fill="url(#colorValue)"
+                />
+                <Line 
+                  yAxisId="right" 
+                  type="monotone" 
+                  dataKey="btc" 
+                  name="BTC Amount"
+                  stroke="hsl(35, 100%, 60%)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </CardContent>
       </Card>
@@ -112,19 +114,21 @@ export default function PortfolioOverview() {
             }}
             className="h-60"
           >
-            <LineChart data={costBasisData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line 
-                type="monotone" 
-                dataKey="price" 
-                name="Cost Basis"
-                stroke="var(--color-price)" 
-                strokeWidth={2} 
-              />
-            </LineChart>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={costBasisData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="price" 
+                  name="Cost Basis"
+                  stroke="hsl(150, 100%, 45%)" 
+                  strokeWidth={2} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </CardContent>
       </Card>
@@ -144,18 +148,20 @@ export default function PortfolioOverview() {
             }}
             className="h-60"
           >
-            <BarChart data={holdingPeriodData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="period" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar 
-                dataKey="amount" 
-                name="BTC"
-                fill="var(--color-amount)" 
-                radius={[4, 4, 0, 0]} 
-              />
-            </BarChart>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={holdingPeriodData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="period" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar 
+                  dataKey="amount" 
+                  name="BTC"
+                  fill="hsl(280, 100%, 65%)" 
+                  radius={[4, 4, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </CardContent>
       </Card>

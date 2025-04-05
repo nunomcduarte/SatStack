@@ -30,3 +30,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Chart styling */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.recharts-text {
+  fill: var(--foreground);
+}
+
+.recharts-default-tooltip {
+  background-color: var(--background) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.recharts-tooltip-wrapper {
+  z-index: 1000;
+}

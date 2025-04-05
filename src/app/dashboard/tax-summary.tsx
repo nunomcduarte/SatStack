@@ -3,7 +3,7 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { Cell, Pie, PieChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
+import { Cell, Pie, PieChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface TaxSummaryProps {
   year: string
@@ -20,8 +20,8 @@ export default function TaxSummary({ year }: TaxSummaryProps) {
   }
   
   const pieData = [
-    { name: 'Short-term', value: taxData.shortTermGains, color: "hsl(var(--chart-1))" },
-    { name: 'Long-term', value: taxData.longTermGains, color: "hsl(var(--chart-3))" },
+    { name: 'Short-term', value: taxData.shortTermGains, color: "hsl(215, 100%, 60%)" },
+    { name: 'Long-term', value: taxData.longTermGains, color: "hsl(150, 100%, 45%)" },
   ]
   
   const monthlyGains = [
@@ -83,32 +83,34 @@ export default function TaxSummary({ year }: TaxSummaryProps) {
               config={{
                 short: {
                   label: "Short-term",
-                  color: "hsl(var(--chart-1))",
+                  color: "hsl(215, 100%, 60%)",
                 },
                 long: {
                   label: "Long-term",
-                  color: "hsl(var(--chart-3))",
+                  color: "hsl(150, 100%, 45%)",
                 },
               }}
             >
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<ChartTooltipContent />} />
-              </PieChart>
+              <ResponsiveContainer width={250} height={200}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<ChartTooltipContent />} />
+                </PieChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -149,23 +151,25 @@ export default function TaxSummary({ year }: TaxSummaryProps) {
             config={{
               gains: {
                 label: "Realized Gains",
-                color: "hsl(var(--chart-4))",
+                color: "hsl(280, 100%, 65%)",
               },
             }}
             className="h-60"
           >
-            <BarChart data={monthlyGains} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar 
-                dataKey="gains" 
-                name="Realized Gains"
-                fill="var(--color-gains)" 
-                radius={[4, 4, 0, 0]} 
-              />
-            </BarChart>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyGains} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar 
+                  dataKey="gains" 
+                  name="Realized Gains"
+                  fill="hsl(280, 100%, 65%)" 
+                  radius={[4, 4, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </CardContent>
       </Card>

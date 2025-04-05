@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { formatBitcoin, formatCurrency, formatDate } from '@/lib/utils/helpers';
 import { TransactionType } from '@/lib/types';
+import { useTransactionsStore, Transaction } from '@/lib/stores/transactionsStore';
 
 interface RecentTransactionsProps {
   filter?: string;
@@ -16,9 +17,11 @@ export default function RecentTransactions({
   timeframe = 'all',
   limit = 10
 }: RecentTransactionsProps) {
-  // This is a placeholder component for now
-  // We'll implement actual data fetching from Supabase later
-  const allTransactions = [
+  // Get transactions from the store
+  const { transactions } = useTransactionsStore();
+  
+  // Fall back to mock data if no transactions in store
+  const allTransactions = transactions.length > 0 ? transactions : [
     {
       id: '1',
       type: 'buy' as TransactionType,
