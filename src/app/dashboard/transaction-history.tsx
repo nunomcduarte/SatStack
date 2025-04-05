@@ -4,8 +4,9 @@ import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import RecentTransactions from '@/components/transactions/RecentTransactions'
 import { Button } from '@/components/ui/button'
-import { DownloadIcon, FilterIcon } from 'lucide-react'
+import { DownloadIcon } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import '@/app/globals.css'
 
 export default function TransactionHistory() {
   const [filter, setFilter] = useState('all')
@@ -43,10 +44,6 @@ export default function TransactionHistory() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
-            <FilterIcon className="h-4 w-4 mr-2" />
-            Advanced Filters
-          </Button>
-          <Button variant="outline" size="sm">
             <DownloadIcon className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -65,7 +62,10 @@ export default function TransactionHistory() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RecentTransactions filter={filter} timeframe={timeframe} />
+          <RecentTransactions 
+            filter={filter} 
+            timeframe={timeframe} 
+          />
         </CardContent>
       </Card>
 

@@ -9,6 +9,7 @@ export interface Transaction {
   bitcoinAmount: number;
   pricePerBitcoin: number;
   fiatAmount: number;
+  fees?: number;
   description?: string;
 }
 

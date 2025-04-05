@@ -2,21 +2,17 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { differenceInDays, isAfter, isBefore, parseISO } from 'date-fns';
 import { formatBitcoin, formatCurrency, formatDate } from '@/lib/utils/helpers';
 import { TransactionType } from '@/lib/types';
 import { useTransactionsStore, Transaction } from '@/lib/stores/transactionsStore';
 
 interface RecentTransactionsProps {
-  filter?: string;
-  timeframe?: string;
-  limit?: number;
+  filter: string;
+  timeframe: string;
 }
 
-export default function RecentTransactions({ 
-  filter = 'all', 
-  timeframe = 'all',
-  limit = 10
-}: RecentTransactionsProps) {
+export default function RecentTransactions({ filter, timeframe }: RecentTransactionsProps) {
   // Get transactions from the store
   const { transactions } = useTransactionsStore();
   
@@ -29,6 +25,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.25,
       pricePerBitcoin: 41500,
       fiatAmount: 10375,
+      fees: 25,
       description: 'Regular purchase'
     },
     {
@@ -38,6 +35,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.5,
       pricePerBitcoin: 42000,
       fiatAmount: 21000,
+      fees: 42,
       description: 'Dollar-cost averaging'
     },
     {
@@ -47,6 +45,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.1,
       pricePerBitcoin: 45000,
       fiatAmount: 4500,
+      fees: 15,
       description: 'Profit taking'
     },
     {
@@ -56,6 +55,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.05,
       pricePerBitcoin: 40000,
       fiatAmount: 2000,
+      fees: 0,
       description: 'Payment from client'
     },
     {
@@ -65,6 +65,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.01,
       pricePerBitcoin: 38000,
       fiatAmount: 380,
+      fees: 2,
       description: 'Online purchase'
     },
     {
@@ -74,6 +75,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.03,
       pricePerBitcoin: 36000,
       fiatAmount: 1080,
+      fees: 5,
       description: 'Transfer to hardware wallet'
     },
     {
@@ -83,6 +85,7 @@ export default function RecentTransactions({
       bitcoinAmount: 0.15,
       pricePerBitcoin: 35000,
       fiatAmount: 5250,
+      fees: 12,
       description: 'Price dip opportunity'
     },
     {
@@ -92,36 +95,42 @@ export default function RecentTransactions({
       bitcoinAmount: 0.02,
       pricePerBitcoin: 33000,
       fiatAmount: 660,
+      fees: 0,
       description: 'Gift from friend'
     }
   ];
 
-  // Apply filters
-  const filteredTransactions = allTransactions
+  // Filter transactions based on type and timeframe
+  const filteredTransactions = transactions
     .filter(transaction => {
-      // Filter by type
+      // Filter by transaction type
       if (filter !== 'all' && transaction.type !== filter) {
         return false;
       }
       
       // Filter by timeframe
-      const txDate = new Date(transaction.date);
-      const now = new Date();
-      
-      if (timeframe === 'year') {
-        return txDate.getFullYear() === now.getFullYear();
-      } else if (timeframe === 'quarter') {
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(now.getMonth() - 3);
-        return txDate >= threeMonthsAgo;
-      } else if (timeframe === 'month') {
-        return txDate.getMonth() === now.getMonth() && 
-               txDate.getFullYear() === now.getFullYear();
+      if (timeframe !== 'all') {
+        const txDate = new Date(transaction.date);
+        const now = new Date();
+        
+        if (timeframe === 'year' && txDate.getFullYear() !== now.getFullYear()) {
+          return false;
+        } else if (timeframe === 'quarter') {
+          const threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(now.getMonth() - 3);
+          if (txDate < threeMonthsAgo) {
+            return false;
+          }
+        } else if (timeframe === 'month') {
+          if (txDate.getMonth() !== now.getMonth() || 
+              txDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
       }
       
-      return true; // 'all' timeframe
-    })
-    .slice(0, limit);
+      return true;
+    });
 
   // Function to get appropriate styling based on transaction type
   const getTransactionTypeStyle = (type: TransactionType) => {
@@ -139,6 +148,19 @@ export default function RecentTransactions({
       default:
         return 'bg-gray-700 text-gray-300';
     }
+  };
+
+  // Function to calculate holding days
+  const calculateHoldingDays = (transaction: Transaction): number | null => {
+    // For buy or receive transactions, calculate days from purchase until now
+    if (transaction.type === 'buy' || transaction.type === 'receive') {
+      const purchaseDate = new Date(transaction.date);
+      const today = new Date();
+      return differenceInDays(today, purchaseDate);
+    }
+    
+    // For sell, send, or spend transactions, holding days doesn't apply
+    return null;
   };
 
   if (filteredTransactions.length === 0) {
@@ -168,7 +190,13 @@ export default function RecentTransactions({
                 Price
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Fees
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                 Total
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Holding Days
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                 Description
@@ -193,7 +221,15 @@ export default function RecentTransactions({
                   {formatCurrency(transaction.pricePerBitcoin)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {formatCurrency(transaction.fees || 0)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {formatCurrency(transaction.fiatAmount)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {calculateHoldingDays(transaction) !== null 
+                    ? `${calculateHoldingDays(transaction)} days` 
+                    : '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {transaction.description}
@@ -203,7 +239,7 @@ export default function RecentTransactions({
           </tbody>
         </table>
       </div>
-      {limit < allTransactions.length && (
+      {filteredTransactions.length < allTransactions.length && (
         <div className="pt-4 pb-2 border-t border-gray-800 mt-4">
           <Link
             href="/dashboard/transactions"

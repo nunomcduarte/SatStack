@@ -5,7 +5,7 @@ export const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 
 export const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 export const NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-export const COINAPI_KEY = process.env.COINAPI_KEY || '';
+export const COINAPI_KEY = process.env.NEXT_PUBLIC_COINAPI_KEY || 'YOUR_COINAPI_KEY_HERE';
 
 // Application settings
 export const APP_NAME = 'SatStack';
@@ -40,6 +40,11 @@ export const TAX_CLASSIFICATIONS = {
 // API endpoints
 export const BITCOIN_PRICE_ENDPOINT = 'https://rest.coinapi.io/v1/exchangerate/BTC/USD';
 export const COINAPI_URL = 'https://rest.coinapi.io/v1';
+
+// Add a helpful console log to debug environment variables loading
+console.log('Environment variables loaded:');
+console.log('- NEXT_PUBLIC_COINAPI_KEY exists:', Boolean(process.env.NEXT_PUBLIC_COINAPI_KEY));
+console.log('- NEXT_PUBLIC_COINAPI_KEY first 5 chars:', process.env.NEXT_PUBLIC_COINAPI_KEY ? process.env.NEXT_PUBLIC_COINAPI_KEY.substring(0, 5) + '...' : 'not set');
 
 // UI Constants
 export const PAGINATION_LIMIT = 10; 

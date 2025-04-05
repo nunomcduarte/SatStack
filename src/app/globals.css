@@ -49,3 +49,179 @@ body {
 .recharts-tooltip-wrapper {
   z-index: 1000;
 }
+
+/* Calendar styling improvements */
+.rdp-head_cell {
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center !important;
+  padding: 10px 0;
+  width: 40px;
+}
+
+.rdp-nav {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 8px;
+}
+
+.rdp-nav_button {
+  color: hsl(var(--foreground)) !important;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.rdp-nav_button:hover {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.rdp-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 8px;
+  padding-top: 8px;
+}
+
+.rdp-day {
+  color: hsl(var(--foreground));
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdp-day:hover:not(.rdp-day_selected) {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+/* Additional styles for calendar header */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
+}
+
+.calendar-header {
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 8px 0;
+}
+
+/* Additional styles for month/year selection */
+.month-grid,
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+}
+
+.month-button,
+.year-button {
+  padding: 8px 0;
+  text-align: center;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Improved day cell styling */
+.rdp-tbody {
+  padding-top: 6px;
+}
+
+.rdp-row {
+  margin-bottom: 2px;
+}
+
+/* Calendar styles */
+.rdp-head_cell {
+  text-align: center !important;
+  font-size: 0.75rem !important;
+  padding: 0.75rem 0 !important;
+  font-weight: 500 !important;
+}
+
+.rdp-day {
+  font-size: 0.875rem !important;
+  height: 2.5rem !important;
+  width: 2.5rem !important;
+  border-radius: 0 !important;
+}
+
+.rdp-day:hover:not(.rdp-day_selected) {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.rdp-day_selected {
+  background-color: rgb(59, 130, 246) !important;
+  color: white !important;
+}
+
+.rdp-caption {
+  display: none !important;
+}
+
+.rdp-months {
+  padding: 0.5rem !important;
+}
+
+.rdp-nav {
+  display: none !important;
+}
+
+.rdp-table {
+  width: 100% !important;
+}
+
+.rdp-weeknumber {
+  font-size: 0.75rem !important;
+}
+
+/* Add style to show the day of the week headers cleanly */
+.rdp-head_row {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+}
+
+.rdp-head_cell {
+  width: auto !important;
+  color: rgb(156, 163, 175) !important;
+}
+
+.rdp-tbody {
+  display: grid !important;
+  grid-template-rows: repeat(6, 1fr) !important;
+}
+
+.rdp-week {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+}
+
+.rdp-day_outside {
+  opacity: 0.4 !important;
+}
