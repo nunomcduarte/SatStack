@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import './globals.css';
 import type { Metadata } from 'next';
@@ -7,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { APP_NAME, APP_DESCRIPTION } from '@/lib/utils/constants';
 import { Providers } from './providers';
 import Navigation from '@/components/Navigation';
+import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,6 +28,7 @@ export default function RootLayout({
             <main className="container mx-auto px-4 py-6">
               {children}
             </main>
+            <Toaster />
           </div>
         </Providers>
       </body>

@@ -11,7 +11,9 @@ import {
   RefreshCw, 
   Plus,
   ChevronDown,
-  Trash
+  Trash,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react'
 import { 
   Select, 
@@ -27,6 +29,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input'
 import { formatDate, formatBitcoin, formatCurrency } from '@/lib/utils/helpers'
 import AddTransactionModal from '@/components/transactions/AddTransactionModal'
@@ -38,9 +50,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function TransactionsPage() {
-  const { transactions, clearTransactions } = useTransactionsStore()
+  const { toast } = useToast()
+  const { transactions, clearTransactions, removeTransaction } = useTransactionsStore()
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [transactionType, setTransactionType] = useState('all')
@@ -48,6 +62,8 @@ export default function TransactionsPage() {
   const [sortOrder, setSortOrder] = useState('desc')
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectAll, setSelectAll] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Reset selection when transactions change
   useEffect(() => {
@@ -148,6 +164,44 @@ export default function TransactionsPage() {
         return 'text-gray-500'
     }
   }
+
+  // Update the delete function to use toast notifications
+  const handleDeleteSelected = async () => {
+    try {
+      setIsDeleting(true);
+      // Store the count before clearing the selection
+      const deletedCount = selectedTransactions.length;
+      
+      // Delete each selected transaction
+      for (const id of selectedTransactions) {
+        removeTransaction(id);
+        // Add a small delay to avoid UI freezing with many items
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      // Clear the selection
+      setSelectedTransactions([]);
+      setShowDeleteDialog(false);
+      
+      // Show success message using toast
+      toast({
+        title: "Transactions deleted",
+        description: `Successfully deleted ${deletedCount} transaction${deletedCount === 1 ? '' : 's'}.`,
+        variant: "success",
+      });
+    } catch (error) {
+      console.error('Error deleting transactions:', error);
+      
+      // Show error message using toast
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting transactions.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -411,10 +465,8 @@ export default function TransactionsPage() {
                 variant="destructive" 
                 size="sm"
                 className="flex items-center gap-1"
-                onClick={() => {
-                  // Implement delete functionality
-                  alert(`Delete ${selectedTransactions.length} transactions?`)
-                }}
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={isDeleting}
               >
                 <Trash className="h-4 w-4" />
                 Delete Selected
@@ -431,6 +483,39 @@ export default function TransactionsPage() {
           onClose={() => setShowAddModal(false)} 
         />
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedTransactions.length} {selectedTransactions.length === 1 ? 'transaction' : 'transactions'}? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelected}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <span className="animate-spin mr-1">⏳</span>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 
