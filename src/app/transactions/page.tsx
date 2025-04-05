@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { useTransactionsStore } from '@/lib/stores/transactionsStore'
+import { useTransactionsStore, Transaction } from '@/lib/stores/transactionsStore'
+import { differenceInDays } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { 
   ArrowUpDown, 
@@ -147,23 +148,36 @@ export default function TransactionsPage() {
     }
   }
 
-  // Transaction type style
+  // Function to calculate holding days, same as in RecentTransactions
+  const calculateHoldingDays = (transaction: Transaction): number | null => {
+    // For buy or receive transactions, calculate days from purchase until now
+    if (transaction.type === 'buy' || transaction.type === 'receive') {
+      const purchaseDate = new Date(transaction.date);
+      const today = new Date();
+      return differenceInDays(today, purchaseDate);
+    }
+    
+    // For sell, send, or spend transactions, holding days doesn't apply
+    return null;
+  };
+
+  // Update the transaction type style to match RecentTransactions
   const getTransactionTypeStyle = (type: string) => {
     switch (type) {
       case 'buy':
-        return 'text-green-500'
+        return 'bg-green-900 text-green-300';
       case 'sell':
-        return 'text-red-500'
+        return 'bg-red-900 text-red-300';
       case 'send':
-        return 'text-yellow-500'
+        return 'bg-yellow-900 text-yellow-300';
       case 'receive':
-        return 'text-blue-500'
+        return 'bg-blue-900 text-blue-300';
       case 'spend':
-        return 'text-purple-500'
+        return 'bg-purple-900 text-purple-300';
       default:
-        return 'text-gray-500'
+        return 'bg-gray-700 text-gray-300';
     }
-  }
+  };
 
   // Update the delete function to use toast notifications
   const handleDeleteSelected = async () => {
@@ -341,7 +355,7 @@ export default function TransactionsPage() {
                     onClick={() => handleSort('amount')}
                   >
                     <div className="flex items-center">
-                      Amount (BTC)
+                      Amount
                       <ChevronDown className={`ml-1 h-4 w-4 ${sortBy === 'amount' ? 'opacity-100' : 'opacity-40'} ${sortBy === 'amount' && sortOrder === 'asc' ? 'rotate-180' : ''}`} />
                     </div>
                   </th>
@@ -351,9 +365,12 @@ export default function TransactionsPage() {
                     onClick={() => handleSort('price')}
                   >
                     <div className="flex items-center">
-                      Price (USD)
+                      Price
                       <ChevronDown className={`ml-1 h-4 w-4 ${sortBy === 'price' ? 'opacity-100' : 'opacity-40'} ${sortBy === 'price' && sortOrder === 'asc' ? 'rotate-180' : ''}`} />
                     </div>
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Fees
                   </th>
                   <th 
                     scope="col" 
@@ -361,12 +378,12 @@ export default function TransactionsPage() {
                     onClick={() => handleSort('total')}
                   >
                     <div className="flex items-center">
-                      Total (USD)
+                      Total
                       <ChevronDown className={`ml-1 h-4 w-4 ${sortBy === 'total' ? 'opacity-100' : 'opacity-40'} ${sortBy === 'total' && sortOrder === 'asc' ? 'rotate-180' : ''}`} />
                     </div>
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Fee (USD)
+                    Holding Days
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Description
@@ -392,26 +409,26 @@ export default function TransactionsPage() {
                         {formatDate(transaction.date)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <div className={`flex items-center ${getTransactionTypeStyle(transaction.type)}`}>
-                          {transaction.type === 'buy' || transaction.type === 'receive' ? (
-                            <ArrowUpDown className="h-4 w-4 mr-1 rotate-180" />
-                          ) : (
-                            <ArrowUpDown className="h-4 w-4 mr-1" />
-                          )}
-                          <span className="capitalize">{transaction.type}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                        ₿ {transaction.bitcoinAmount.toFixed(8)}
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTransactionTypeStyle(transaction.type)}`}>
+                          {transaction.type.toUpperCase()}
+                        </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ${transaction.pricePerBitcoin.toLocaleString()}
+                        {formatBitcoin(transaction.bitcoinAmount)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ${transaction.fiatAmount.toLocaleString()}
+                        {formatCurrency(transaction.pricePerBitcoin)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ${(transaction.fees || 0).toLocaleString()}
+                        {formatCurrency(transaction.fees || 0)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {formatCurrency(transaction.fiatAmount)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {calculateHoldingDays(transaction) !== null 
+                          ? `${calculateHoldingDays(transaction)} days` 
+                          : '—'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
                         {transaction.description || '—'}
@@ -425,7 +442,7 @@ export default function TransactionsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                       {searchQuery || transactionType !== 'all' ? (
                         <p>No transactions match your filters</p>
                       ) : (
